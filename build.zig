@@ -1,27 +1,21 @@
 const std = @import("std");
 
-/// Compile bundled GLAD (OpenGL loader) and GLFW3
-/// No system dependencies required - libraries are compiled from source
 fn linkGl(b: *std.Build, exe: *std.Build.Module, dep: *std.Build.Dependency) void {
-    // Add GLAD (OpenGL loader) - from the nanovg_zig dependency
     exe.addIncludePath(dep.path("lib/gl2/include"));
     exe.addCSourceFile(.{ .file = dep.path("lib/gl2/src/glad.c"), .flags = &.{} });
 
-    // Add GLFW3 include path - from our project's lib directory
     exe.addIncludePath(b.path("lib/glfw3/include"));
 
     const target = exe.resolved_target.?;
     const target_os = target.result.os.tag;
 
-    // Platform-specific GLFW compilation
     const glfw_flags = switch (target_os) {
-        .linux => &[_][]const u8{"-D_GLFW_X11", "-D_GLFW_EGL"},
+        .linux => &[_][]const u8{"-D_GLFW_X11", "-D_GLFW_GLX"},
         .macos => &[_][]const u8{"-D_GLFW_COCOA"},
         .windows => &[_][]const u8{"-D_GLFW_WIN32"},
-        else => &[_][]const u8{"-D_GLFW_X11", "-D_GLFW_EGL"},
+        else => &[_][]const u8{"-D_GLFW_X11", "-D_GLFW_GLX"},
     };
 
-    // GLFW core source files (common to all platforms)
     exe.addCSourceFile(.{
         .file = b.path("lib/glfw3/src/init.c"),
         .flags = glfw_flags
@@ -119,9 +113,15 @@ fn linkGl(b: *std.Build, exe: *std.Build.Module, dep: *std.Build.Dependency) voi
                 .flags = glfw_flags
             });
 
-            // Link required X11 libraries
-            exe.linkSystemLibrary("x11", .{});
-            exe.linkSystemLibrary("xrandr", .{});
+            exe.linkSystemLibrary("X11", .{});
+            exe.linkSystemLibrary("Xrandr", .{});
+            exe.linkSystemLibrary("Xinerama", .{});
+            exe.linkSystemLibrary("Xcursor", .{});
+            exe.linkSystemLibrary("Xi", .{});
+            exe.linkSystemLibrary("GL", .{});
+            exe.linkSystemLibrary("dl", .{});
+            exe.linkSystemLibrary("pthread", .{});
+            exe.linkSystemLibrary("m", .{});
         },
         .macos => {
             exe.addCSourceFile(.{
@@ -149,14 +149,6 @@ fn linkGl(b: *std.Build, exe: *std.Build.Module, dep: *std.Build.Dependency) voi
                 .flags = glfw_flags
             });
             exe.addCSourceFile(.{
-                .file = b.path("lib/glfw3/src/egl_context.c"),
-                .flags = glfw_flags
-            });
-            exe.addCSourceFile(.{
-                .file = b.path("lib/glfw3/src/osmesa_context.c"),
-                .flags = glfw_flags
-            });
-            exe.addCSourceFile(.{
                 .file = b.path("lib/glfw3/src/posix_thread.c"),
                 .flags = glfw_flags
             });
@@ -165,7 +157,13 @@ fn linkGl(b: *std.Build, exe: *std.Build.Module, dep: *std.Build.Dependency) voi
                 .flags = glfw_flags
             });
 
-            // macOS frameworks and libraries
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/egl_context.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/osmesa_context.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/null_init.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/null_joystick.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/null_monitor.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/null_window.c"), .flags = glfw_flags });
+
             exe.linkFramework("Cocoa", .{});
             exe.linkFramework("OpenGL", .{});
             exe.linkFramework("IOKit", .{});
@@ -204,32 +202,14 @@ fn linkGl(b: *std.Build, exe: *std.Build.Module, dep: *std.Build.Dependency) voi
                 .file = b.path("lib/glfw3/src/wgl_context.c"),
                 .flags = glfw_flags
             });
-            exe.addCSourceFile(.{
-                .file = b.path("lib/glfw3/src/egl_context.c"),
-                .flags = glfw_flags
-            });
-            exe.addCSourceFile(.{
-                .file = b.path("lib/glfw3/src/osmesa_context.c"),
-                .flags = glfw_flags
-            });
-            exe.addCSourceFile(.{
-                .file = b.path("lib/glfw3/src/null_init.c"),
-                .flags = glfw_flags
-            });
-            exe.addCSourceFile(.{
-                .file = b.path("lib/glfw3/src/null_joystick.c"),
-                .flags = glfw_flags
-            });
-            exe.addCSourceFile(.{
-                .file = b.path("lib/glfw3/src/null_monitor.c"),
-                .flags = glfw_flags
-            });
-            exe.addCSourceFile(.{
-                .file = b.path("lib/glfw3/src/null_window.c"),
-                .flags = glfw_flags
-            });
 
-            // Windows libraries
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/egl_context.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/osmesa_context.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/null_init.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/null_joystick.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/null_monitor.c"), .flags = glfw_flags });
+            exe.addCSourceFile(.{ .file = b.path("lib/glfw3/src/null_window.c"), .flags = glfw_flags });
+
             exe.linkSystemLibrary("user32", .{});
             exe.linkSystemLibrary("gdi32", .{});
             exe.linkSystemLibrary("shell32", .{});
@@ -237,7 +217,6 @@ fn linkGl(b: *std.Build, exe: *std.Build.Module, dep: *std.Build.Dependency) voi
             exe.linkSystemLibrary("opengl32", .{});
         },
         else => {
-            // Fallback to minimal X11 for unknown platforms
             exe.addCSourceFile(.{
                 .file = b.path("lib/glfw3/src/posix_time.c"),
                 .flags = &.{"-D_GLFW_X11"}
@@ -258,7 +237,7 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
-        .link_libc = false,
+        .link_libc = true,
     });
 
 
@@ -272,7 +251,6 @@ pub fn build(b: *std.Build) void {
         .root_module = app_mod,
     });
 
-    // Windows: Make it a GUI app (no console window)
     if (target.result.os.tag == .windows) {
         app_exe.subsystem = .Windows;
     }
