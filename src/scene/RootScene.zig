@@ -140,6 +140,8 @@ fn onRender(s: *scene.Scene, renderer: *gfx.Renderer) void {
     gfx.get().roundedRect(20, 114, 40, 40, 20, gfx.grayF(1));
     gfx.get().text(70, 134, fonts.SemiBold, "Shoroa_", 28, gfx.grayF(1), gfx.ALIGN_MIDDLE_LEFT);
 
+    gfx.get().rect(0, 0, @as(f32, @floatFromInt(w)), 58, gfx.grayF(1));
+
     const mouse_x: f32 = @floatCast(app_ctx.mouse_x);
     const mouse_y: f32 = @floatCast(app_ctx.mouse_y);
 

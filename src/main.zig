@@ -7,6 +7,7 @@ const gfx = @import("gfx.zig");
 const scene = @import("scene.zig");
 const RootScene = @import("scene/RootScene.zig");
 const ctx = @import("context.zig");
+const platform = @import("platform.zig");
 
 const initial_width: u32 = 840;
 const initial_height: u32 = 480;
@@ -44,6 +45,18 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
         .left => app_ctx.mouse_left_down = pressed,
         .right => app_ctx.mouse_right_down = pressed,
         .middle => app_ctx.mouse_middle_down = pressed,
+    }
+
+
+    const w = app_ctx.window_width;
+
+    const mx = app_ctx.mouse_x;
+    const my = app_ctx.mouse_y;
+
+    if (mx > 0 and my > 0 and mx <= @as(f64, @floatFromInt(w)) and my <= 50 and mouse_button == .left and pressed) {
+        app_ctx.dragging_titlebar = true;
+    } else if (mouse_button == .left) {
+        app_ctx.dragging_titlebar = false;
     }
 
     scene.MGR.mouseButton(.{
@@ -87,6 +100,7 @@ pub fn main() !void {
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 1);
     c.glfwWindowHint(c.GLFW_SAMPLES, 4);
     c.glfwWindowHint(c.GLFW_RESIZABLE, c.GLFW_FALSE);
+    c.glfwWindowHint(c.GLFW_DECORATED, c.GLFW_FALSE);
 
     window = c.glfwCreateWindow(@intCast(initial_width), @intCast(initial_height), "Glide Launcher", null, null);
     if (window == null) {
@@ -98,7 +112,7 @@ pub fn main() !void {
     _ = c.glfwSetMouseButtonCallback(window, mouseButtonCallback);
     _ = c.glfwSetCursorPosCallback(window, cursorPosCallback);
     _ = c.glfwSetWindowSizeCallback(window, resizeCallback);
-    
+
     c.glfwSetWindowSizeLimits(window, initial_width, initial_height, initial_width, initial_height);
 
     c.glfwMakeContextCurrent(window);
@@ -133,12 +147,26 @@ pub fn main() !void {
         const w = app_ctx.window_width;
         const h = app_ctx.window_height;
 
+        const mx = app_ctx.mouse_x;
+        const my = app_ctx.mouse_y;
+
+        var win_x: c_int = 0;
+        var win_y: c_int = 0;
+        c.glfwGetWindowPos(window, &win_x, &win_y);
+
+        const root_x = win_x + @as(c_int, @intFromFloat(mx));
+        const root_y = win_y + @as(c_int, @intFromFloat(my));
+
         var fetch_w: c_int = 0;
         var fetch_h: c_int = 0;
         c.glfwGetFramebufferSize(window, &fetch_w, &fetch_h);
 
         if (fetch_w != @as(c_int, @intCast(w)) or fetch_h != @as(c_int, @intCast(h))) {
             c.glfwSetWindowSize(window, initial_width, initial_height);
+        }
+
+        if (app_ctx.dragging_titlebar) {
+            platform.beginWindowDrag(@ptrCast(window), @intCast(root_x), @intCast(root_y));
         }
 
         c.glViewport(0, 0, @intCast(w), @intCast(h));

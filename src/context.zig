@@ -14,6 +14,7 @@ pub const AppContext = struct {
     mouse_left_down: bool = false,
     mouse_right_down: bool = false,
     mouse_middle_down: bool = false,
+    dragging_titlebar: bool = false,
 
     pub fn init(allocator: std.mem.Allocator, width: u32, height: u32) AppContext {
         return .{
