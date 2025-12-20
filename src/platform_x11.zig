@@ -8,6 +8,11 @@ const c = @cImport({
     @cInclude("X11/Xatom.h");
 });
 
+pub fn pl_initWindowing(glfw_window: *anyopaque) void {
+    _ = glfw_window;
+    std.debug.print("Windowing initialization not required on this platform.\n", .{});
+}
+
 pub fn pl_beginWindowDrag(
     glfw_window: *anyopaque,
     mouse_x: i32,

@@ -53,7 +53,7 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
     const mx = app_ctx.mouse_x;
     const my = app_ctx.mouse_y;
 
-    if (mx > 0 and my > 0 and mx <= @as(f64, @floatFromInt(w)) and my <= 50 and mouse_button == .left and pressed) {
+    if (mx > 0 and my > 0 and mx <= @as(f64, @floatFromInt(w)) - 114 and my <= 50 and mouse_button == .left and pressed) {
         app_ctx.dragging_titlebar = true;
     } else if (mouse_button == .left) {
         app_ctx.dragging_titlebar = false;
@@ -107,6 +107,8 @@ pub fn main() !void {
         return error.GLFWInitFailed;
     }
     defer c.glfwDestroyWindow(window);
+
+    platform.initWindowing(@ptrCast(window));
 
     _ = c.glfwSetKeyCallback(window, keyCallback);
     _ = c.glfwSetMouseButtonCallback(window, mouseButtonCallback);
