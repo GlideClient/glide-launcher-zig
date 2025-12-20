@@ -1,0 +1,10 @@
+# Ignore editor and IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Zig build artifacts
+.zig-cache/
+zig-out/
+*.o
