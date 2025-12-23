@@ -13,7 +13,6 @@ pub const State = struct {
     frame_count: u64 = 0,
     fps: u64 = 0,
     dt_count: f32 = 0,
-    iconImage: ?gfx.nvg.Image = null,
     bgImage: ?gfx.nvg.Image = null,
     components: std.array_list.Managed(*ui.Component) = undefined,
 
@@ -70,8 +69,7 @@ fn onAddButtonClick(user: ?*anyopaque) void {
 fn onInit(s: *scene.Scene) void {
     const st: *State = @ptrCast(@alignCast(s.vdata.?));
 
-    st.iconImage = gfx.get().createImage(images.images[0], .{ .generate_mipmaps = true }) catch null;
-    st.bgImage = gfx.get().createImage(images.images[1], .{ .generate_mipmaps = true }) catch null;
+    st.bgImage = gfx.get().createImage(images.images[0], .{ .generate_mipmaps = true }) catch null;
 
     st.components = std.array_list.Managed(*ui.Component).init(st.allocator);
     st.version_components = std.array_list.Managed(*ui.Component).init(st.allocator);
@@ -275,11 +273,9 @@ fn onRender(s: *scene.Scene, renderer: *gfx.Renderer) void {
         gfx.get().drawImage(img, 0, 0, @floatFromInt(w), @floatFromInt(h), 0, 0.6);
     }
 
-    if (st.iconImage) |img| {
-        gfx.get().drawImage(img, 10, 10, 30, 30, 0, 1);
-    }
+    gfx.get().text(25, 25, fonts.Glicons, Icons.Gliconic.GLIDE, 26, gfx.gray(255), gfx.ALIGN_CENTER);
 
-    gfx.get().text(50, 26, fonts.Regular, "Launcher", 20, gfx.grayF(1), gfx.ALIGN_MIDDLE_LEFT);
+    gfx.get().text(46, 25, fonts.Regular, "Launcher", 20, gfx.grayF(1), gfx.ALIGN_MIDDLE_LEFT);
     gfx.get().text(20, 80, fonts.Regular, "Welcome back,", 24, gfx.grayF(1), gfx.ALIGN_TOP_LEFT);
     gfx.get().roundedRect(20, 114, 40, 40, 20, gfx.grayF(1));
     gfx.get().text(70, 134, fonts.SemiBold, "Shoroa_", 28, gfx.grayF(1), gfx.ALIGN_MIDDLE_LEFT);
