@@ -2,6 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 pub const nvg = @import("nanovg");
 const fonts = @import("fonts.zig");
+const context = @import("context.zig");
 
 pub const Renderer = struct {
     vg: nvg,
@@ -26,8 +27,8 @@ pub const Renderer = struct {
         defer nvg.deinit(self.vg);
     }
 
-    pub fn beginFrame(self: *Renderer, window_width: f32, window_height: f32, px_ratio: f32) void {
-        self.vg.beginFrame(window_width, window_height, px_ratio);
+    pub fn beginFrame(self: *Renderer) void {
+        self.vg.beginFrame(@as(f32, @floatFromInt(context.get().window_width)), @as(f32, @floatFromInt(context.get().window_height)), context.get().pixel_ratio);
     }
 
     pub fn endFrame(self: *Renderer) void {

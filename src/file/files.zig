@@ -38,29 +38,28 @@ pub fn initFileSystem(allocator: std.mem.Allocator) !void {
     };
 }
 
-pub fn writeVersionManifest(allocator: std.mem.Allocator, manifest_json: []const u8) !void {
-    const version_dir = try std.fs.path.join(allocator, &.{root_dir, "versions"});
-    defer allocator.free(version_dir);
+pub fn writeFile(allocator: std.mem.Allocator, relative_path: []const u8, data: []const u8) !void {
+    const full_path = try std.fs.path.join(allocator, &.{root_dir, relative_path});
+    defer allocator.free(full_path);
 
-    std.fs.makeDirAbsolute(version_dir) catch |err| switch (err) {
-        error.PathAlreadyExists => {},
-        else => return err,
-    };
+    if (std.fs.path.dirname(full_path)) |dir| {
+        std.fs.makeDirAbsolute(dir) catch |err| switch (err) {
+            error.PathAlreadyExists => {},
+            else => return err,
+        };
+    }
 
-    const manifest_path = try std.fs.path.join(allocator, &.{version_dir, "version_manifest.json"});
-    defer allocator.free(manifest_path);
-
-    const file = try std.fs.createFileAbsolute(manifest_path, .{ .truncate = true });
+    const file = try std.fs.createFileAbsolute(full_path, .{ .truncate = true });
     defer file.close();
 
-    try file.writeAll(manifest_json);
+    try file.writeAll(data);
 }
 
-pub fn readLocalVersionManifest(allocator: std.mem.Allocator, buffer: []u8) ![]const u8 {
-    const manifest_path = try std.fs.path.join(allocator, &.{root_dir, "versions", "version_manifest.json"});
-    defer allocator.free(manifest_path);
+pub fn readFile(allocator: std.mem.Allocator, relative_path: []const u8, buffer: []u8) ![]const u8 {
+    const full_path = try std.fs.path.join(allocator, &.{root_dir, relative_path});
+    defer allocator.free(full_path);
 
-    const file = try std.fs.openFileAbsolute(manifest_path, .{});
+    const file = try std.fs.openFileAbsolute(full_path, .{});
     defer file.close();
 
     const file_size = try file.getEndPos();
@@ -68,10 +67,61 @@ pub fn readLocalVersionManifest(allocator: std.mem.Allocator, buffer: []u8) ![]c
         return error.BufferTooSmall;
     }
 
-    var read_buffer: [4096]u8 = undefined;
-    var reader = file.reader(&read_buffer);
-    const bytes = reader.interface.take(@as(usize, @intCast(file_size))) catch return error.ReadError;
-    @memcpy(buffer[0..bytes.len], bytes);
+    const bytes_read = try file.readAll(buffer[0..@intCast(file_size)]);
+    return buffer[0..bytes_read];
+}
 
-    return buffer[0..bytes.len];
+pub fn writeVersionManifest(allocator: std.mem.Allocator, manifest_json: []const u8) !void {
+    try writeFile(allocator, "versions/version_manifest.json", manifest_json);
+}
+
+pub fn readLocalVersionManifest(allocator: std.mem.Allocator, buffer: []u8) ![]const u8 {
+    return readFile(allocator, "versions/version_manifest.json", buffer);
+}
+
+pub fn getAbsolutePath(allocator: std.mem.Allocator, relative_path: []const u8) ![]const u8 {
+    return std.fs.path.join(allocator, &.{ root_dir, relative_path });
+}
+
+pub fn makeDirRecursive(allocator: std.mem.Allocator, relative_path: []const u8) !void {
+    const full_path = try std.fs.path.join(allocator, &.{ root_dir, relative_path });
+    defer allocator.free(full_path);
+
+    var path_so_far = std.array_list.Managed(u8).init(allocator);
+    defer path_so_far.deinit();
+
+    var it = std.mem.splitScalar(u8, full_path, std.fs.path.sep);
+    while (it.next()) |component| {
+        if (component.len == 0) {
+            try path_so_far.append(std.fs.path.sep);
+            continue;
+        }
+
+        if (path_so_far.items.len > 0 and path_so_far.items[path_so_far.items.len - 1] != std.fs.path.sep) {
+            try path_so_far.append(std.fs.path.sep);
+        }
+        try path_so_far.appendSlice(component);
+
+        std.fs.makeDirAbsolute(path_so_far.items) catch |err| switch (err) {
+            error.PathAlreadyExists => {},
+            else => return err,
+        };
+    }
+}
+
+pub fn fileExists(allocator: std.mem.Allocator, relative_path: []const u8) bool {
+    const full_path = std.fs.path.join(allocator, &.{ root_dir, relative_path }) catch return false;
+    defer allocator.free(full_path);
+
+    std.fs.accessAbsolute(full_path, .{}) catch return false;
+    return true;
+}
+
+pub fn dirExists(allocator: std.mem.Allocator, relative_path: []const u8) bool {
+    const full_path = std.fs.path.join(allocator, &.{ root_dir, relative_path }) catch return false;
+    defer allocator.free(full_path);
+
+    var dir = std.fs.openDirAbsolute(full_path, .{}) catch return false;
+    dir.close();
+    return true;
 }

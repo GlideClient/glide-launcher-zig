@@ -4,7 +4,7 @@ const scene = @import("../scene.zig");
 const fonts = @import("../fonts.zig");
 const ctx = @import("../context.zig");
 
-pub const SimpleButton = @import("simple_button.zig");
+pub const Button = @import("button.zig");
 
 pub const Rect = struct {
     x: f32,

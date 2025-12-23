@@ -4,11 +4,19 @@ pub const Client = struct {
     java: Java,
     libraries: []Library,
     download: Download,
+    manifest_url: ?[]const u8 = null,
+    tweakClass: ?[]const u8 = null,
 };
 
 pub const Java = struct {
     component: []const u8,
     version: u32,
+};
+
+pub const JavaDownload = struct {
+    url: []const u8,
+    sha256: []const u8,
+    size: u64,
 };
 
 pub const Library = struct {

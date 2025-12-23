@@ -132,7 +132,7 @@ pub fn main() !void {
 
     try files.initFileSystem(allocator);
 
-    // const info = try hash.hashFileSha256("/home/shoroa/Code/MISC/glide-files/client/legacy-712/client.jar");
+    // const info = try hash.hashFileSha256("/home/shoroa/Code/MISC/glide-files/libraries/asm/asm.jar");
     // std.debug.print(
     //     "size={d}, sha256={s}\n",
     //     .{ info.size, std.fmt.bytesToHex(info.hash, .lower) },
@@ -227,7 +227,7 @@ pub fn main() !void {
         c.glClearColor(0, 0, 0, 0);
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT | c.GL_STENCIL_BUFFER_BIT);
 
-        gfx.get().beginFrame(@floatFromInt(w), @floatFromInt(h), app_ctx.pixel_ratio);
+        gfx.get().beginFrame();
         scene.MGR.render(gfx.get());
         gfx.get().endFrame();
 
