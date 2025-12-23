@@ -4,33 +4,23 @@ const builtin = @import("builtin");
 var root_dir: []const u8 = undefined;
 
 fn getDataDir(allocator: std.mem.Allocator) !?[]const u8 {
-    switch (builtin.os.tag) {
-        .linux, .freebsd, .netbsd, .openbsd => {
-            // Try XDG_DATA_HOME first
-            if (std.posix.getenv("XDG_DATA_HOME")) |xdg_data| {
-                return try allocator.dupe(u8, xdg_data);
-            }
-            // Fall back to ~/.local/share
-            if (std.posix.getenv("HOME")) |home| {
-                return try std.fs.path.join(allocator, &.{ home, ".local", "share" });
-            }
-            return null;
-        },
-        .macos => {
-            if (std.posix.getenv("HOME")) |home| {
-                return try std.fs.path.join(allocator, &.{ home, "Library", "Application Support" });
-            }
-            return null;
-        },
-        .windows => {
-            if (std.posix.getenv("APPDATA")) |appdata| {
-                return try allocator.dupe(u8, appdata);
-            }
-            return null;
-        },
-        else => return null,
+    const os = builtin.os.tag;
+
+    if (os == .windows) {
+        return std.process.getEnvVarOwned(allocator, "APPDATA") catch null;
     }
+
+    if (std.process.getEnvVarOwned(allocator, "XDG_DATA_HOME")) |xdg| {
+        return xdg;
+    } else |_| {}
+
+    if (std.process.getEnvVarOwned(allocator, "HOME")) |home| {
+        return try std.fs.path.join(allocator, &.{ home, ".local", "share" });
+    } else |_| {}
+
+    return null;
 }
+
 
 pub fn initFileSystem(allocator: std.mem.Allocator) !void {
     var root_path_data = try getDataDir(allocator);
