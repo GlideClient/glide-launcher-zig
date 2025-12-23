@@ -1,4 +1,5 @@
 const std = @import("std");
+const types = @import("json/types.zig");
 
 const c = @import("c.zig").c;
 
@@ -8,6 +9,7 @@ pub const AppContext = struct {
     window_handle: ?*c.GLFWwindow = null,
     pixel_ratio: f32,
     allocator: std.mem.Allocator,
+    version_manifest: ?types.VersionManifest = null,
 
     mouse_x: f64 = 0,
     mouse_y: f64 = 0,

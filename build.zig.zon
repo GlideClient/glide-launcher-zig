@@ -8,11 +8,10 @@
             .url = "git+https://github.com/fabioarnold/nanovg-zig.git#1d96b54016d463fba1fb3ce6430cb8513797aee0",
             .hash = "nanovg_zig-0.1.0-dfizXkkjNQD1YkP3mBx7sDe_ufUy66UCFU-Uc30eDAYH",
         },
+        .mr_tween = .{
+            .url = "git+https://codeberg.org/Games-by-Mason/mr_tween.git#bdff54a786ec1b72649069273975cfb987079938",
+            .hash = "mr_tween-0.0.0-WbH78eHFAAA5m_ywEaHnFRI0pjcz_LC1pxet7W4rWa8o",
+        },
     },
-    .paths = .{
-        "build.zig",
-        "build.zig.zon",
-        "src",
-        "lib"
-    },
+    .paths = .{ "build.zig", "build.zig.zon", "src", "lib" },
 }

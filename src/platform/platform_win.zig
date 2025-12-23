@@ -1,6 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const ctx = @import("context.zig");
+const ctx = @import("../context.zig");
 
 const c = @cImport({
     @cDefine("GLFW_EXPOSE_NATIVE_WIN32", "1");

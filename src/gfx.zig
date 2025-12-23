@@ -117,6 +117,40 @@ pub const Renderer = struct {
     pub fn restore(self: *Renderer) void {
         self.vg.restore();
     }
+
+    pub fn clip(self: *Renderer) void {
+        self.vg.clip();
+    }
+
+    pub fn scissor(self: *Renderer, x: f32, y: f32, w: f32, h: f32) void {
+        self.vg.scissor(x, y, w, h);
+    }
+
+    pub fn resetScissor(self: *Renderer) void {
+        self.vg.resetScissor();
+    }
+
+    pub fn translate(self: *Renderer, x: f32, y: f32) void {
+        self.vg.translate(x, y);
+    }
+
+    pub fn rotate(self: *Renderer, angle: f32) void {
+        self.vg.rotate(angle);
+    }
+
+    pub fn scale(self: *Renderer, sx: f32, sy: f32) void {
+        self.vg.scale(sx, sy);
+    }
+
+    pub fn globalAlpha(self: *Renderer, alpha: f32) void {
+        self.vg.globalAlpha(alpha);
+    }
+
+    pub fn textWidth(self: *Renderer, font: [:0]const u8, string: []const u8, font_size: f32) f32 {
+        self.vg.fontFace(font);
+        self.vg.fontSize(font_size);
+        return self.vg.textBounds(0, 0, string, null);
+    }
 };
 
 pub const ALIGN_TOP_LEFT: nvg.TextAlign = .{

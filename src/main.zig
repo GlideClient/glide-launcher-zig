@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const c = @import("c.zig").c;
+const hash = @import("hash.zig");
 
 const nvg = @import("nanovg");
 const gfx = @import("gfx.zig");
@@ -8,6 +9,9 @@ const scene = @import("scene.zig");
 const RootScene = @import("scene/RootScene.zig");
 const ctx = @import("context.zig");
 const platform = @import("platform.zig");
+const api = @import("web/api.zig");
+const json_types = @import("json/types.zig");
+const files = @import("file/files.zig");
 
 const initial_width: u32 = 840;
 const initial_height: u32 = 480;
@@ -47,7 +51,6 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
         .middle => app_ctx.mouse_middle_down = pressed,
     }
 
-
     const w = app_ctx.window_width;
 
     const mx = app_ctx.mouse_x;
@@ -85,11 +88,55 @@ fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(
     c.glfwSetWindowSize(window, initial_width, initial_height);
 }
 
+fn scrollCallback(window: ?*c.GLFWwindow, xoffset: f64, yoffset: f64) callconv(.c) void {
+    _ = window;
+
+    scene.MGR.scroll(xoffset,yoffset);
+}
+
+fn get_manifest(allocator: std.mem.Allocator) !void {
+    var local_manifest_buffer: [4096]u8 = undefined;
+    const version_manifest_data: ?[]const u8 = api.fetchFile(allocator, "api/v1/client/manifest.json", "application/json") catch |api_err| blk: {
+        std.debug.print("Failed to fetch manifest from API: {}, trying local file...\n", .{api_err});
+        break :blk files.readLocalVersionManifest(allocator, &local_manifest_buffer) catch |local_err| {
+            std.debug.print("Failed to read local manifest: {}\n", .{local_err});
+            break :blk null;
+        };
+    };
+
+    if (version_manifest_data) |manifest_data| {
+        files.writeVersionManifest(allocator, manifest_data) catch |err| {
+            std.debug.print("Failed to write manifest: {}\n", .{err});
+        };
+
+        const parsed = std.json.parseFromSlice(json_types.VersionManifest, allocator, manifest_data, .{
+            .ignore_unknown_fields = true,
+        }) catch |err| {
+            std.debug.print("Failed to parse manifest: {}\n", .{err});
+            return err;
+        };
+        defer parsed.deinit();
+
+        ctx.get().version_manifest = parsed.value;
+        std.debug.print("Version manifest loaded successfully\n", .{});
+    } else {
+        std.debug.print("Warning: No version manifest available, running without it\n", .{});
+    }
+}
+
 pub fn main() !void {
     var window: ?*c.GLFWwindow = null;
     var prevt: f64 = 0;
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
+
+    try files.initFileSystem(allocator);
+
+    // const info = try hash.hashFileSha256("/home/shoroa/Code/MISC/glide-files/client/legacy-712/client.jar");
+    // std.debug.print(
+    //     "size={d}, sha256={s}\n",
+    //     .{ info.size, std.fmt.bytesToHex(info.hash, .lower) },
+    // );
 
     if (c.glfwInit() == c.GLFW_FALSE) {
         return error.GLFWInitFailed;
@@ -99,6 +146,7 @@ pub fn main() !void {
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 2);
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 1);
     c.glfwWindowHint(c.GLFW_SAMPLES, 4);
+    c.glfwWindowHint(c.GLFW_VISIBLE, c.GLFW_FALSE);
     c.glfwWindowHint(c.GLFW_RESIZABLE, c.GLFW_FALSE);
     c.glfwWindowHint(c.GLFW_DECORATED, c.GLFW_FALSE);
 
@@ -114,6 +162,7 @@ pub fn main() !void {
     _ = c.glfwSetMouseButtonCallback(window, mouseButtonCallback);
     _ = c.glfwSetCursorPosCallback(window, cursorPosCallback);
     _ = c.glfwSetWindowSizeCallback(window, resizeCallback);
+    _ = c.glfwSetScrollCallback(window, scrollCallback);
 
     c.glfwSetWindowSizeLimits(window, initial_width, initial_height, initial_width, initial_height);
 
@@ -128,6 +177,8 @@ pub fn main() !void {
     ctx.set(&app_ctx);
     app_ctx.window_handle = window;
 
+    _ = try std.Thread.spawn(.{}, get_manifest, .{allocator});
+
     try gfx.init(allocator);
 
     scene.MGR = try scene.SceneManager.init(allocator);
@@ -136,6 +187,7 @@ pub fn main() !void {
     try scene.MGR.pushNew(RootScene.new);
 
     c.glfwSwapInterval(1);
+    c.glfwShowWindow(window);
 
     c.glfwSetTime(0);
     prevt = c.glfwGetTime();

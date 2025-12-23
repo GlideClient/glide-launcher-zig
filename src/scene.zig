@@ -82,6 +82,13 @@ pub const SceneManager = struct {
             scene_ptr.mouseMove(event);
         }
     }
+
+    pub fn scroll(self: *SceneManager, xoffset: f64, yoffset: f64) void {
+        if (self.scenes.items.len > 0) {
+            const scene_ptr = self.scenes.items[self.scenes.items.len - 1];
+            scene_ptr.scroll(xoffset, yoffset);
+        }
+    }
 };
 
 pub var MGR: SceneManager = undefined;
@@ -123,6 +130,12 @@ pub const Scene = struct {
             handler(self, event);
         }
     }
+
+    pub fn scroll(self: *Scene, xoffset: f64, yoffset: f64) void {
+        if (self.vtable.onScroll) |handler| {
+            handler(self, xoffset, yoffset);
+        }
+    }
 };
 
 pub const MouseButton = enum(u8) {
@@ -158,4 +171,5 @@ pub const VTABLE = struct {
     onMouseButton: ?*const fn (self: *Scene, event: MouseButtonEvent) void = null,
     onKey: ?*const fn (self: *Scene, event: KeyEvent) void = null,
     onMouseMove: ?*const fn (self: *Scene, event: MouseMoveEvent) void = null,
+    onScroll: ?*const fn (self: *Scene, xoffset: f64, yoffset: f64) void = null,
 };

@@ -2,9 +2,9 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 const platform = switch (builtin.os.tag) {
-    .linux => @import("platform_x11.zig"),
-    .windows => @import("platform_win.zig"),
-    else => @import("platform_nt.zig"),
+    .linux => @import("platform/platform_x11.zig"),
+    .windows => @import("platform/platform_win.zig"),
+    else => @import("platform/platform_nt.zig"),
 };
 
 pub fn beginWindowDrag(

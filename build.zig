@@ -232,6 +232,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const tween = b.dependency("mr_tween", .{});
 
     const app_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
@@ -243,6 +244,7 @@ pub fn build(b: *std.Build) void {
 
     linkGl(b, app_mod, nanovg_zig);
     app_mod.addImport("nanovg", nanovg_zig.module("nanovg"));
+    app_mod.addImport("tween", tween.module("mr_tween"));
 
     const run = b.step("run", "Run the app");
 
